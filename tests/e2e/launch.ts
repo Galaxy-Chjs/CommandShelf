@@ -15,28 +15,24 @@ import { _electron as electron, type ElectronApplication, type Page } from '@pla
  *    is set (some CI shells and agent harnesses set it), Electron starts as
  *    plain Node and the app never boots, which produces a confusing failure.
  * 3. On CI the GPU is switched off. A hosted runner has no real graphics
- *    adapter, and Electron can fail to bring up a window — or fail to start at
- *    all — when it tries to use one.
+ *    adapter, and Electron can fail to bring up a window when it tries to use
+ *    one. Software rendering still produces a working page, so nothing the
+ *    tests assert on changes.
  */
 
 const PROJECT_ROOT = process.cwd()
 
 /** Chromium flags used only on CI. */
-const CI_ARGS = [
-  '--disable-gpu',
-  '--disable-gpu-compositing',
-  '--disable-software-rasterizer',
-  '--disable-dev-shm-usage',
-]
+const CI_ARGS = ['--disable-gpu']
 
 /**
  * Resolves the Electron binary.
  *
- * `node_modules/electron/path.txt` is the canonical pointer — it is written by
- * the package's postinstall after it downloads the binary. It is read
- * defensively and the failure message lists what is actually on disk, because
- * "the postinstall did not run" is otherwise indistinguishable from "the app
- * crashed on startup" in CI output.
+ * `node_modules/electron/path.txt` is the canonical pointer, written by the
+ * `install-electron` script that this project runs as its own `postinstall`.
+ * It is read defensively and the failure message lists what is actually on
+ * disk, because "the binary was never downloaded" is otherwise
+ * indistinguishable from "the app crashed on startup" in CI output.
  */
 function electronExecutable(): string {
   const packageDir = join(PROJECT_ROOT, 'node_modules', 'electron')

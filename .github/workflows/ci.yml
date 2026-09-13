@@ -65,10 +65,10 @@ jobs:
 
       - run: npm ci
 
-      # The Electron binary is downloaded by the `electron` package's
-      # postinstall, not by npm. If that step silently does nothing, every test
-      # fails in under a second with an opaque spawn error, so check it here
-      # where the reason is obvious.
+      # `electron@44` no longer declares a postinstall of its own, so the binary
+      # is fetched by this project's own `postinstall` script. If that ever
+      # regresses, every test fails in under a second with an opaque spawn
+      # error, so check the binary here where the reason is obvious.
       - name: Verify the Electron binary
         shell: pwsh
         run: |

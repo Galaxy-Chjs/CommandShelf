@@ -153,6 +153,32 @@ ES module 也无法加载。
 **修复**：文档截图改为新建一个加载同一个 `panel.html` 的窗口来拍摄——同一套 React 组件、
 同一个 preload，不是假图。`screenshots.spec.ts` 中记录了原因。
 
+### 2.11 `electron@44` 不再自带 postinstall，新克隆装不出 Electron
+
+**现象**：GitHub Actions 的 Windows 端到端作业失败：56 个测试跑了 54 秒就全部结束，平均每个
+测试（含一次重试）约 0.5 秒。这个耗时特征是 `electron.launch` 立刻抛错，而不是界面断言失败。
+
+**排查**：本地设置 `CI=true` 重跑，56 个全过，说明不是配置问题而是环境差异。于是先给 CI 加了
+一步"检查 Electron 二进制是否存在"的诊断，下一次运行一秒就明确报出：
+
+```text
+Verify the Electron binary  failure  1s
+```
+
+**根因**：`electron@44.3.0` 的 `package.json` **完全没有 `scripts` 字段**，也就是说它不再提供
+`postinstall` 钩子。二进制改为在第一次运行 `electron` 命令时惰性下载。本地之所以能跑，是因为
+开发过程中手动执行过一次 `npx electron`，它顺手把二进制拉了下来。
+
+这**不只是 CI 问题**：README 里写的 `git clone && npm install && npm run dev`，在陌生机器上
+`npm install` 根本不会下载 Electron，`npm run dev` 会以一个看不懂的错误失败。CI 把这个面向
+真实用户的缺陷暴露了出来。
+
+**修复**：在本项目的 `package.json` 中加入 `"postinstall": "install-electron"`，恢复"安装即
+下载"的行为。`install.js` 自带 `isInstalled()` 提前返回，因此重复执行是快速的空操作。
+
+**验证**：删掉 `node_modules/electron/dist` 与 `path.txt` 模拟全新克隆，再执行 `npm install`，
+两者都被自动还原。同时 CI 保留了那一步二进制检查，作为这个 postinstall 的回归保护。
+
 ---
 
 ## 3. 自动化验证结果
@@ -263,10 +289,11 @@ $ git status --short
 （无未跟踪的临时文件）
 ```
 
-- 调试脚本（`debug-launch.mjs`、`debug-shot.mjs`、`debug-capture.mjs`）已删除
+- 调试脚本（`debug-launch.mjs`、`debug-shot.mjs`、`debug-capture.mjs`、`debug-buttons.mjs`）已删除
 - 探针输出与临时截图已删除
 - `release/`、`out/`、`coverage/`、`node_modules/` 均在 `.gitignore` 中
-- 截图位于 `docs/images/`，由测试脚本可重复生成
+- 截图位于 `docs/images/`，由 `npm run screenshots` 可重复生成；默认的 `npm run e2e`
+  不会写入仓库，因此一次测试运行不会留下改动的图片
 - 图标由 `scripts/generate-icons.mjs` 生成，仓库中没有不可复现的二进制资源
 
 ---
