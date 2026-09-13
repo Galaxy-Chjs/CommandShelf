@@ -1,0 +1,11 @@
+node_modules
+out
+dist
+release
+coverage
+playwright-report
+test-results
+package-lock.json
+docs/images
+src/renderer/index.html
+src/renderer/panel.html

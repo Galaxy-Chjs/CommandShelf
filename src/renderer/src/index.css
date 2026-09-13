@@ -1,0 +1,331 @@
+@import 'tailwindcss';
+
+/* CommandShelf visual language: dense, developer-oriented, GitHub-adjacent.
+   No gradients, no glassmorphism, no decorative animation. Kind colours are the
+   one place saturated hue is allowed — they are what makes a list scannable. */
+
+@theme {
+  --color-canvas: #0d1117;
+  --color-surface: #11161d;
+  --color-surface-2: #161b22;
+  --color-surface-3: #1c232c;
+  --color-border: #232a33;
+  --color-border-strong: #30363d;
+  --color-ink: #e6edf3;
+  --color-ink-muted: #8b949e;
+  --color-ink-faint: #6e7681;
+  --color-accent: #58a6ff;
+  --color-accent-dim: #1f6feb;
+  --color-good: #3fb950;
+  --color-warn: #d29922;
+  --color-bad: #f85149;
+
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+/* Plain custom properties for hand-written CSS and inline styles. Tailwind only
+   emits the theme variables it needs, so anything referenced from a rule below
+   has to be declared here as well. */
+:root {
+  color-scheme: dark;
+  --cs-bg: #0d1117;
+  --cs-surface: #11161d;
+  --cs-surface-2: #161b22;
+  --cs-surface-3: #1c232c;
+  --cs-border: #232a33;
+  --cs-border-strong: #30363d;
+  --cs-text: #e6edf3;
+  --cs-muted: #8b949e;
+  --cs-faint: #6e7681;
+  --cs-accent: #58a6ff;
+  --cs-accent-dim: #1f6feb;
+  --cs-good: #3fb950;
+  --cs-warn: #d29922;
+  --cs-bad: #f85149;
+
+  --cs-kind-command: #58a6ff;
+  --cs-kind-prompt: #bc8cff;
+  --cs-kind-snippet: #3fb950;
+  --cs-kind-link: #39c5cf;
+  --cs-kind-path: #d29922;
+
+  --cs-shadow: 0 16px 48px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.4);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --cs-bg: #ffffff;
+  --cs-surface: #f6f8fa;
+  --cs-surface-2: #eef1f4;
+  --cs-surface-3: #e4e8ec;
+  --cs-border: #d8dee4;
+  --cs-border-strong: #b9c0c8;
+  --cs-text: #1f2328;
+  --cs-muted: #57606a;
+  --cs-faint: #6e7781;
+  --cs-accent: #0969da;
+  --cs-accent-dim: #0969da;
+  --cs-good: #1a7f37;
+  --cs-warn: #9a6700;
+  --cs-bad: #cf222e;
+
+  --cs-kind-command: #0969da;
+  --cs-kind-prompt: #8250df;
+  --cs-kind-snippet: #1a7f37;
+  --cs-kind-link: #1b7c83;
+  --cs-kind-path: #9a6700;
+
+  --cs-shadow: 0 16px 48px rgb(31 35 40 / 0.18), 0 2px 8px rgb(31 35 40 / 0.12);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--cs-bg);
+  color: var(--cs-text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei',
+    Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* The quick panel is a transparent, frameless window: only the card inside it
+   paints, which is what gives the panel its rounded, floating appearance. */
+body.cs-panel {
+  background: transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--cs-accent) 32%, transparent);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--cs-accent);
+  outline-offset: 1px;
+  border-radius: 6px;
+}
+
+/* --------------------------------------------------------------- utilities */
+
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'liga' 0;
+}
+
+.surface {
+  background: var(--cs-surface);
+  border: 1px solid var(--cs-border);
+  border-radius: 10px;
+}
+
+.scroll-area {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cs-border-strong) transparent;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: var(--cs-border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: var(--cs-faint);
+  background-clip: content-box;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Truncates to a fixed number of lines. */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------- panel */
+
+@keyframes cs-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cs-panel-card {
+  animation: cs-panel-in 120ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  box-shadow: var(--cs-shadow);
+}
+
+@keyframes cs-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.cs-flash {
+  animation: cs-flash 900ms ease-out forwards;
+}
+
+/* -------------------------------------------------------------- code block */
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+/* Syntax tokens, mapped onto the shared palette rather than a bundled theme.
+   highlight.js emits `hljs-*` class names on `<span>`s inside the code block. */
+:root {
+  --cs-code-comment: #8b949e;
+  --cs-code-keyword: #ff7b72;
+  --cs-code-string: #a5d6ff;
+  --cs-code-number: #79c0ff;
+  --cs-code-function: #d2a8ff;
+  --cs-code-variable: #ffa657;
+  --cs-code-operator: #ff7b72;
+  --cs-code-punctuation: #8b949e;
+  --cs-code-builtin: #79c0ff;
+  --cs-code-tag: #7ee787;
+}
+
+:root[data-theme='light'] {
+  --cs-code-comment: #6e7781;
+  --cs-code-keyword: #cf222e;
+  --cs-code-string: #0a3069;
+  --cs-code-number: #0550ae;
+  --cs-code-function: #8250df;
+  --cs-code-variable: #953800;
+  --cs-code-operator: #cf222e;
+  --cs-code-punctuation: #57606a;
+  --cs-code-builtin: #0550ae;
+  --cs-code-tag: #116329;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--cs-code-comment);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-doctag,
+.hljs-name {
+  color: var(--cs-code-keyword);
+}
+
+.hljs-string,
+.hljs-attr,
+.hljs-addition,
+.hljs-template-tag,
+.hljs-regexp {
+  color: var(--cs-code-string);
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-meta {
+  color: var(--cs-code-number);
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_ {
+  color: var(--cs-code-function);
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-attribute,
+.hljs-property,
+.hljs-selector-attr {
+  color: var(--cs-code-variable);
+}
+
+.hljs-operator,
+.hljs-link {
+  color: var(--cs-code-operator);
+}
+
+.hljs-punctuation {
+  color: var(--cs-code-punctuation);
+}
+
+.hljs-built_in,
+.hljs-type,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--cs-code-builtin);
+}
+
+.hljs-tag,
+.hljs-selector-pseudo {
+  color: var(--cs-code-tag);
+}
+
+.hljs-deletion {
+  color: var(--cs-bad);
+}
+
+.hljs-strong {
+  font-weight: 600;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+/* Template variables are highlighted by CommandShelf itself, not Prism, so
+   they read as "fill this in" rather than as ordinary syntax. */
+.cs-variable {
+  color: var(--cs-accent);
+  background: color-mix(in srgb, var(--cs-accent) 14%, transparent);
+  border-radius: 4px;
+  padding: 0 2px;
+  font-weight: 500;
+}

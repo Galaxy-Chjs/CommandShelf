@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-label="CommandShelf architecture: an Electron main process owning SQLite and the global hotkey, talking to two React renderers over a typed IPC bridge.">
+  <defs>
+    <style>
+      .band { fill: #11161d; stroke: #232a33; stroke-width: 1; }
+      .box { fill: #161b22; stroke: #30363d; stroke-width: 1; }
+      .box-accent { fill: #161b22; stroke: #58a6ff; stroke-width: 1; }
+      .title { fill: #e6edf3; font-family: ui-sans-serif, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; font-weight: 600; }
+      .band-label { fill: #8b949e; font-family: ui-monospace, Consolas, monospace; font-size: 11px; letter-spacing: 0.06em; }
+      .box-name { fill: #e6edf3; font-family: ui-monospace, Consolas, monospace; font-size: 12px; font-weight: 600; }
+      .box-detail { fill: #8b949e; font-family: ui-sans-serif, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 10.5px; }
+      .bridge { fill: #58a6ff; font-family: ui-monospace, Consolas, monospace; font-size: 10.5px; }
+      .arrow { stroke: #58a6ff; stroke-width: 1.5; fill: none; }
+    </style>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#58a6ff" />
+    </marker>
+  </defs>
+
+  <rect width="960" height="520" fill="#0d1117" />
+
+  <!-- main process -->
+  <rect class="band" x="24" y="24" width="912" height="252" rx="12" />
+  <text class="band-label" x="44" y="48">ELECTRON MAIN PROCESS · NODE 24 · SANDBOXED RENDERERS</text>
+
+  <rect class="box" x="44" y="60" width="200" height="48" rx="8" />
+  <text class="box-name" x="60" y="80">index.ts</text>
+  <text class="box-detail" x="60" y="96">lifecycle · single instance</text>
+
+  <rect class="box" x="260" y="60" width="200" height="48" rx="8" />
+  <text class="box-name" x="276" y="80">windows.ts</text>
+  <text class="box-detail" x="276" y="96">main window · quick panel</text>
+
+  <rect class="box" x="476" y="60" width="200" height="48" rx="8" />
+  <text class="box-name" x="492" y="80">shortcuts.ts</text>
+  <text class="box-detail" x="492" y="96">global hotkey · conflicts</text>
+
+  <rect class="box" x="692" y="60" width="200" height="48" rx="8" />
+  <text class="box-name" x="708" y="80">tray.ts</text>
+  <text class="box-detail" x="708" y="96">tray icon · quit</text>
+
+  <rect class="box" x="44" y="124" width="848" height="48" rx="8" />
+  <text class="box-name" x="60" y="144">controller.ts</text>
+  <text class="box-detail" x="60" y="160">settings side effects · hotkey re-registration · import / export · change notifications</text>
+
+  <rect class="box-accent" x="44" y="188" width="560" height="60" rx="8" />
+  <text class="box-name" x="60" y="210">repo/</text>
+  <text class="box-detail" x="60" y="226">items · tags · collections · transfer · seed</text>
+  <text class="box-detail" x="60" y="240">every write is one transaction</text>
+
+  <rect class="box-accent" x="620" y="188" width="272" height="60" rx="8" />
+  <text class="box-name" x="636" y="210">db/ · node:sqlite</text>
+  <text class="box-detail" x="636" y="226">FTS5 index + migrations</text>
+  <text class="box-detail" x="636" y="240">commandshelf.db (WAL)</text>
+
+  <!-- bridge -->
+  <line class="arrow" x1="480" y1="276" x2="480" y2="316" marker-start="url(#head)" marker-end="url(#head)" />
+  <text class="bridge" x="500" y="302">contextBridge · ipcRenderer.invoke · Result&lt;T&gt;</text>
+
+  <!-- renderer -->
+  <rect class="band" x="24" y="320" width="912" height="176" rx="12" />
+  <text class="band-label" x="44" y="344">RENDERER · REACT 19 + TAILWIND CSS V4 · CONTEXT ISOLATION · SANDBOX · STRICT CSP</text>
+
+  <rect class="box" x="44" y="356" width="416" height="120" rx="8" />
+  <text class="box-name" x="60" y="378">MainWindow · index.html</text>
+  <text class="box-detail" x="60" y="398">sidebar · result list · detail pane</text>
+  <text class="box-detail" x="60" y="414">editor · settings · import / export</text>
+  <text class="box-detail" x="60" y="436">keyboard: / ↑ ↓ ↵ N E B Del</text>
+  <text class="box-detail" x="60" y="452">debounced search · item patching</text>
+
+  <rect class="box" x="476" y="356" width="416" height="120" rx="8" />
+  <text class="box-name" x="492" y="378">QuickPanel · panel.html</text>
+  <text class="box-detail" x="492" y="398">frameless, transparent, always on top</text>
+  <text class="box-detail" x="492" y="414">type → select → Enter → clipboard</text>
+  <text class="box-detail" x="492" y="436">template variables filled inline</text>
+  <text class="box-detail" x="492" y="452">hides on blur, Escape or copy</text>
+</svg>

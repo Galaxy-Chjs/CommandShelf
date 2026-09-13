@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            command: npm run dist:win
+          - os: ubuntu-latest
+            command: npm run dist:linux
+          - os: macos-latest
+            command: npm run dist:mac
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # `dist:*` runs the typecheck and builds the bundles before packaging.
+      - name: Package
+        run: ${{ matrix.command }}
+        env:
+          # Nothing is code-signed; publishing is handled by the release job.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Verify the packaged application starts
+        if: matrix.os == 'windows-latest'
+        run: npm run smoke:packaged
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.os }}
+          path: |
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+            release/*.dmg
+          if-no-files-found: error
+
+  release:
+    name: publish
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "CommandShelf ${GITHUB_REF_NAME}" \
+            --generate-notes \
+            artifacts/*
