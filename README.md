@@ -214,6 +214,7 @@ npm run typecheck      # three TypeScript projects: main, renderer, e2e
 npm run lint
 npm test               # 250 unit and component tests
 npm run e2e            # 56 end-to-end tests driving the real application
+npm run screenshots    # regenerate docs/images (writes into the repository)
 npm run test:coverage
 npm run icons          # regenerate build/icon.png, build/icon.ico, the tray icon
 ```

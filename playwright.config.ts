@@ -19,4 +19,19 @@ export default defineConfig({
   use: {
     trace: 'retain-on-failure',
   },
+  projects: [
+    {
+      // The test suite. `npm run e2e` runs this one.
+      name: 'app',
+      testIgnore: /screenshots\.spec\.ts/,
+    },
+    {
+      // Regenerates docs/images. Kept out of the default run because it writes
+      // to the repository: the example data is seeded relative to "now", so the
+      // "N 天前" labels shift and every capture would show up as a change.
+      // `npm run screenshots` runs it deliberately.
+      name: 'screenshots',
+      testMatch: /screenshots\.spec\.ts/,
+    },
+  ],
 })

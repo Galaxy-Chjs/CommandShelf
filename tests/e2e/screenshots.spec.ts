@@ -12,7 +12,11 @@ import { launchApp, resultRows, seedViaIpc, sidebar, type LaunchedApp } from './
  * loaded — nothing is mocked up. They are produced at 2x so the text is crisp.
  *
  * Regenerate with:
- *   npm run build && npx playwright test tests/e2e/screenshots.spec.ts
+ *   npm run build && npm run screenshots
+ *
+ * Excluded from the default test run: the example data is seeded relative to
+ * "now", so the "N 天前" labels shift and a plain `npm run e2e` would leave
+ * modified images in the working tree.
  */
 
 const OUTPUT = join(process.cwd(), 'docs', 'images')

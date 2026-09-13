@@ -204,6 +204,7 @@ npm run typecheck      # 三个 TypeScript 工程：main、renderer、e2e
 npm run lint
 npm test               # 250 个单元与组件测试
 npm run e2e            # 56 个端到端测试，驱动真实应用
+npm run screenshots    # 重新生成 docs/images（会写入仓库）
 npm run test:coverage
 npm run icons          # 重新生成图标（纯 Node，无图像依赖）
 ```
