@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -8,23 +7,59 @@ import { _electron as electron, type ElectronApplication, type Page } from '@pla
 /**
  * Launches the built application for end-to-end tests.
  *
- * Two things matter here:
+ * Three things matter here:
  *
  * 1. Every launch gets its own temporary `userData` directory, so a test run can
  *    never read or write the developer's real CommandShelf database.
  * 2. `ELECTRON_RUN_AS_NODE` is deleted from the environment. When that variable
  *    is set (some CI shells and agent harnesses set it), Electron starts as
  *    plain Node and the app never boots, which produces a confusing failure.
+ * 3. On CI the GPU is switched off. A hosted runner has no real graphics
+ *    adapter, and Electron can fail to bring up a window — or fail to start at
+ *    all — when it tries to use one.
  */
 
 const PROJECT_ROOT = process.cwd()
 
-/** Resolves the Electron binary without importing the `electron` module, whose
- *  TypeScript declarations describe the API rather than the path string that
- *  Node actually gets. */
+/** Chromium flags used only on CI. */
+const CI_ARGS = [
+  '--disable-gpu',
+  '--disable-gpu-compositing',
+  '--disable-software-rasterizer',
+  '--disable-dev-shm-usage',
+]
+
+/**
+ * Resolves the Electron binary.
+ *
+ * `node_modules/electron/path.txt` is the canonical pointer — it is written by
+ * the package's postinstall after it downloads the binary. It is read
+ * defensively and the failure message lists what is actually on disk, because
+ * "the postinstall did not run" is otherwise indistinguishable from "the app
+ * crashed on startup" in CI output.
+ */
 function electronExecutable(): string {
-  const binary = readFileSync(join(PROJECT_ROOT, 'node_modules/electron/path.txt'), 'utf8').trim()
-  return join(PROJECT_ROOT, 'node_modules/electron/dist', binary)
+  const packageDir = join(PROJECT_ROOT, 'node_modules', 'electron')
+  const pathFile = join(packageDir, 'path.txt')
+  const distDir = join(packageDir, 'dist')
+
+  if (existsSync(pathFile)) {
+    const binary = readFileSync(pathFile, 'utf8').trim()
+    const resolved = join(distDir, binary)
+    if (binary && existsSync(resolved)) return resolved
+  }
+
+  // Fall back to whatever layout is present, so a stale path.txt is survivable.
+  for (const candidate of ['electron.exe', 'electron', 'Electron.app/Contents/MacOS/Electron']) {
+    const resolved = join(distDir, candidate)
+    if (existsSync(resolved)) return resolved
+  }
+
+  const listing = existsSync(distDir) ? readdirSync(distDir).slice(0, 20).join(', ') : '(missing)'
+  throw new Error(
+    `找不到 Electron 可执行文件：path.txt 存在=${existsSync(pathFile)}，dist/ 内容=[${listing}]。` +
+      '通常是 npm ci 的 postinstall 没有下载二进制文件。',
+  )
 }
 
 export interface LaunchedApp {
@@ -42,7 +77,7 @@ export async function launchApp(options: { extraArgs?: string[] } = {}): Promise
 
   const app = await electron.launch({
     executablePath: electronExecutable(),
-    args: ['.', ...(options.extraArgs ?? [])],
+    args: ['.', ...(process.env.CI ? CI_ARGS : []), ...(options.extraArgs ?? [])],
     cwd: PROJECT_ROOT,
     env: {
       ...process.env,

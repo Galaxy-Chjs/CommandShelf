@@ -65,6 +65,24 @@ jobs:
 
       - run: npm ci
 
+      # The Electron binary is downloaded by the `electron` package's
+      # postinstall, not by npm. If that step silently does nothing, every test
+      # fails in under a second with an opaque spawn error, so check it here
+      # where the reason is obvious.
+      - name: Verify the Electron binary
+        shell: pwsh
+        run: |
+          $pkg = "node_modules/electron"
+          $binary = Join-Path $pkg "dist/electron.exe"
+          Write-Host "path.txt present : $(Test-Path (Join-Path $pkg 'path.txt'))"
+          Write-Host "binary present   : $(Test-Path $binary)"
+          Write-Host "node             : $(node --version)"
+          Write-Host "npm              : $(npm --version)"
+          if (-not (Test-Path $binary)) {
+            Write-Error "Electron binary missing — the postinstall did not download it."
+            exit 1
+          }
+
       - name: Build
         run: npm run build
 

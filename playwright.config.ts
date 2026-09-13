@@ -14,6 +14,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
+  // Stop after a handful of failures on CI: 56 tests each retrying a broken
+  // launch produces a wall of identical output and a slow job.
+  maxFailures: process.env.CI ? 5 : 0,
   forbidOnly: Boolean(process.env.CI),
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
