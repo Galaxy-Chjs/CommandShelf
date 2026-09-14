@@ -33,11 +33,25 @@ jobs:
       - run: npm ci
 
       # `dist:*` runs the typecheck and builds the bundles before packaging.
+      #
+      # The output is captured to a file so that, when packaging fails, the
+      # reason can be repeated as an annotation. Action logs require an
+      # authenticated session to read; annotations do not, so a failure on a
+      # runner you cannot log into still says what went wrong.
       - name: Package
-        run: ${{ matrix.command }}
+        shell: bash
         env:
           # Nothing is code-signed; publishing is handled by the release job.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          set +e
+          ${{ matrix.command }} > package.log 2>&1
+          code=$?
+          tail -n 60 package.log
+          if [ $code -ne 0 ]; then
+            node scripts/ci-annotate.mjs package.log "打包失败 (${{ matrix.os }})"
+          fi
+          exit $code
 
       - name: Verify the packaged application starts
         if: matrix.os == 'windows-latest'
