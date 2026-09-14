@@ -135,7 +135,8 @@ them.
 
 ## Install
 
-CommandShelf is distributed as a GitHub Release, not through a package registry.
+CommandShelf is distributed as a GitHub Release, not through a package registry:
+**[download the latest release](https://github.com/Galaxy-Chjs/CommandShelf/releases/latest)**.
 
 ```bash
 # Windows — download the installer or the portable build

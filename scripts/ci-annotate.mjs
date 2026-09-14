@@ -31,9 +31,6 @@ const MAX = 6000
 const tail = text.length > MAX ? `…（省略前 ${text.length - MAX} 字符）\n${text.slice(-MAX)}` : text
 
 // Workflow-command escaping: `%` first, then newlines.
-const escaped = tail
-  .replace(/%/g, '%25')
-  .replace(/\r/g, '')
-  .replace(/\n/g, '%0A')
+const escaped = tail.replace(/%/g, '%25').replace(/\r/g, '').replace(/\n/g, '%0A')
 
 process.stdout.write(`::error title=${title}::${escaped}\n`)

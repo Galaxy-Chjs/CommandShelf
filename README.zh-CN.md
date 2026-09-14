@@ -125,7 +125,8 @@ ssh -L {{local_port=8888}}:localhost:{{remote_port=8888}} {{server=user@10.0.0.1
 
 ## 安装
 
-CommandShelf 通过 GitHub Release 分发，不通过包管理器。
+CommandShelf 通过 GitHub Release 分发，不通过包管理器：
+**[下载最新版本](https://github.com/Galaxy-Chjs/CommandShelf/releases/latest)**。
 
 ```bash
 # Windows —— 安装版或免安装版
