@@ -7,6 +7,7 @@ import {
   type Item,
   type ItemDraft,
   type ItemQuery,
+  type LoginItemState,
   type Result,
   type Settings,
   type Tag,
@@ -65,7 +66,7 @@ export function createMockApi(
     collections?: Collection[]
     tags?: Tag[]
     settings?: Partial<Settings>
-    info?: Partial<AppInfo>
+    info?: Omit<Partial<AppInfo>, 'loginItem'> & { loginItem?: Partial<LoginItemState> }
   } = {},
 ): MockApi {
   const calls: RecordedCall[] = []
@@ -86,6 +87,12 @@ export function createMockApi(
     schemaVersion: 1,
     hotkeyRegistered: true,
     ...options.info,
+    loginItem: {
+      supported: true,
+      packaged: true,
+      registered: false,
+      ...options.info?.loginItem,
+    },
   }
 
   const record = (channel: string, ...args: unknown[]): void => {

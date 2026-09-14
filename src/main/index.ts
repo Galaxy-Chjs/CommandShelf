@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { BrowserWindow, app } from 'electron'
 
 import { closeContext, getContext, initContext, markQuitting } from './context'
-import { setQuitHandler, startHotkey } from './controller'
+import { HIDDEN_FLAG, setQuitHandler, startHotkey, syncLaunchAtLogin } from './controller'
 import { registerIpc } from './ipc'
 import { serveRenderer } from './protocol'
 import { unregisterHotkeys } from './shortcuts'
@@ -46,7 +46,8 @@ if (!gotTheLock) {
       serveRenderer(join(__dirname, '../renderer'))
     }
 
-    createMainWindow()
+    // An instance started by the login item goes straight to the tray.
+    createMainWindow({ show: !process.argv.includes(HIDDEN_FLAG) })
 
     // The panel is created up front and kept hidden: building a BrowserWindow
     // on the first hotkey press would add a visible delay to the one
@@ -56,6 +57,10 @@ if (!gotTheLock) {
     createTray()
     setQuitHandler(() => app.quit())
     startHotkey()
+    // Rewrite the login item on every start: the registration lives in the
+    // operating system and points at an executable path, which goes stale as
+    // soon as a new version is installed somewhere else.
+    syncLaunchAtLogin()
 
     if (process.env.COMMANDSHELF_DEVTOOLS === '1') {
       getContext().mainWindow?.webContents.openDevTools({ mode: 'detach' })

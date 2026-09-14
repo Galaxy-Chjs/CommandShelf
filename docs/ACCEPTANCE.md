@@ -179,6 +179,52 @@ Verify the Electron binary  failure  1s
 **验证**：删掉 `node_modules/electron/dist` 与 `path.txt` 模拟全新克隆，再执行 `npm install`，
 两者都被自动还原。同时 CI 保留了那一步二进制检查，作为这个 postinstall 的回归保护。
 
+### 2.12 开机自启开关看起来生效了，其实什么都没做
+
+**现象**：用户反馈在设置里打开了「开机自动启动」，但开机并不会启动。
+
+**原因**有两层：
+
+1. `applyLaunchAtLogin()` 里有一句 `if (!app.isPackaged) return`。本意是"不要把开发用的
+   `electron.exe` 写进系统登录项"，但它是**静默返回**的——界面照样把开关显示为已开启，
+   设置也照样存进数据库，只有注册这一步被跳过。用户看到的就是"开了但没用"。
+2. 注册只在**切换开关的那一刻**执行。登录项记录的是可执行文件的绝对路径，换一个目录安装新
+   版本之后，旧记录会指向一个已经不存在的文件，而应用不会自我修复。
+
+**修复**：
+
+- 新增 `loginItemState()`，返回系统的真实状态（`supported` / `packaged` / `registered`），
+  并通过 `AppInfo` 暴露给界面。设置里现在显示的是**系统实际注册状态**，而不是数据库里的偏好值。
+- 开发模式与 Linux（Electron 不支持该能力）会在设置里明确说明，不再假装生效。
+- 新增 `syncLaunchAtLogin()`，每次启动都按存储的偏好重写登录项，路径变化时自动修好。
+- 注册时显式传入 `path: process.execPath` 与 `args: ['--hidden']`，让开机启动**静默进入托盘**；
+  主进程识别 `--hidden`，只建窗口不显示。
+
+**验证**（针对打包后的可执行文件，真实读写注册表）：
+
+```text
+registry before  : (no entry)
+app info before  : {"supported":true,"packaged":true,"registered":false}
+--- after ENABLE ---
+  + com.galaxychjs.commandshelf = "...\CommandShelf.exe" --hidden
+openAtLogin (with matching path/args): true
+--- after DISABLE ---
+  - com.galaxychjs.commandshelf
+```
+
+`--hidden` 的启动行为也单独验证过：
+
+```text
+normal        : index.html visible=true
+with --hidden : index.html visible=false，panel.html 仍然创建
+```
+
+排查过程中还踩了一个自己的坑：第一次检查注册表时用的是
+`reg query ... /v CommandShelf`，而 Electron 写入的值名是 AppUserModelId
+（`com.galaxychjs.commandshelf`），于是得到"没有注册"的错误结论。改成整表前后 diff 之后才
+看到条目其实一直都在。**查询条件写错会凭空造出一个不存在的 bug**，这也是为什么最终验证改成
+了完整前后对比，而不是查某个键名。
+
 ---
 
 ## 3. 自动化验证结果

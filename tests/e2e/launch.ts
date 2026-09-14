@@ -90,6 +90,21 @@ export async function launchApp(options: { extraArgs?: string[] } = {}): Promise
   // it is a reliable "the app is actually up" signal.
   await main.getByText('CommandShelf', { exact: true }).first().waitFor({ timeout: 30_000 })
 
+  // The global hotkey is a machine-wide resource. If another CommandShelf (or
+  // any other program) already owns the combination, the app still starts but
+  // cannot claim it — which then shows up as a puzzling failure somewhere
+  // unrelated. Say so out loud, once, at the point where it happens.
+  const info = await main.evaluate(async () => {
+    const result = await window.commandShelf.app.info()
+    return result.ok ? result.data : null
+  })
+  if (info && !info.hotkeyRegistered) {
+    process.stderr.write(
+      '[e2e] 提示：全局快捷键未能注册，通常是因为已经有一个 CommandShelf' +
+        '（或别的程序）占用了它。这会影响与快捷键相关的断言，请先退出其它实例。\n',
+    )
+  }
+
   return {
     app,
     main,

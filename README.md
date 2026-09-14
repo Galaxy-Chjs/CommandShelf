@@ -85,6 +85,18 @@ a piece of content faster.
   <kbd>Enter</kbd> to copy, <kbd>N</kbd> new, <kbd>E</kbd> edit, <kbd>B</kbd> favourite,
   <kbd>Del</kbd> delete.
 
+### Running in the background
+
+- Closing the window keeps CommandShelf in the tray; the hotkey keeps working. Quitting is
+  explicit, from the tray menu.
+- "Start at login" registers the installed application with the operating system (the `Run` key on
+  Windows) and starts it **silently to the tray** — no window on every boot, just the hotkey.
+- The registration is rewritten on every launch, because it stores an executable path that would
+  otherwise go stale when a new version is installed somewhere else.
+- Settings reports whether the operating system actually has it registered, so the switch cannot
+  show "on" while nothing is registered. It is skipped in development, where the executable is the
+  Electron build tool rather than the app, and unsupported on Linux — both cases say so.
+
 ### Organising
 
 - Five kinds — command, prompt, code snippet, link, path — each with its own colour, icon and

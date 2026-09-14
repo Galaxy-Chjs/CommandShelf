@@ -160,6 +160,24 @@ export interface AppInfo {
   databasePath: string
   schemaVersion: number
   hotkeyRegistered: boolean
+  loginItem: LoginItemState
+}
+
+/**
+ * What the operating system currently has registered for auto-start.
+ *
+ * Deliberately separate from the stored `launchAtLogin` preference: the switch
+ * can be on while nothing is registered — on Linux, where Electron does not
+ * implement login items, or in development, where `process.execPath` is the
+ * Electron build tool rather than the app. Settings shows this so the switch
+ * cannot silently lie.
+ */
+export interface LoginItemState {
+  /** False on platforms where Electron has no login-item support. */
+  supported: boolean
+  /** False when running from source, where auto-start is deliberately skipped. */
+  packaged: boolean
+  registered: boolean
 }
 
 export interface PanelRequest {

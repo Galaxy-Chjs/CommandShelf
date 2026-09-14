@@ -58,7 +58,14 @@ function loadRenderer(window: BrowserWindow, page: 'index' | 'panel'): void {
 /* Main window                                                                */
 /* -------------------------------------------------------------------------- */
 
-export function createMainWindow(): BrowserWindow {
+/**
+ * Creates the management window.
+ *
+ * `show: false` builds it without presenting it, which is what an auto-started
+ * instance wants: the tray icon and the hotkey are the interface, and a window
+ * appearing on every boot would be an annoyance.
+ */
+export function createMainWindow(options: { show?: boolean } = {}): BrowserWindow {
   const ctx = getContext()
 
   const window = new BrowserWindow({
@@ -81,9 +88,11 @@ export function createMainWindow(): BrowserWindow {
 
   lockDownNavigation(window)
 
-  window.once('ready-to-show', () => {
-    window.show()
-  })
+  if (options.show !== false) {
+    window.once('ready-to-show', () => {
+      window.show()
+    })
+  }
 
   // Closing the management window keeps the app alive in the tray, which is
   // where the global hotkey lives. Quitting is explicit: tray menu or Ctrl+Q.

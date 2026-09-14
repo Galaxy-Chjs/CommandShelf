@@ -197,8 +197,27 @@ export function SettingsDialog({
               checked={settings.launchAtLogin}
               onChange={(value) => void update({ launchAtLogin: value })}
               label="开机自动启动"
-              hint="安装版本才会生效；开发模式下不会写入系统登录项。"
+              hint="开机后在后台启动，只留一个托盘图标；按快捷键随时呼出，不会弹出窗口。"
             />
+
+            {info && !info.loginItem.supported ? (
+              <Banner tone="warn">
+                当前系统（{info.platform}）不支持由应用注册开机启动。请把 CommandShelf
+                的可执行文件放进系统的自启动设置里。
+              </Banner>
+            ) : info && !info.loginItem.packaged ? (
+              <Banner tone="warn">
+                现在是源码开发模式（<span className="mono">npm run dev</span>
+                ），注册开机启动会指向 Electron 开发程序而不是 CommandShelf
+                本身，因此已被跳过。安装版本（安装包或免安装版）里这个开关会正常生效。
+              </Banner>
+            ) : info?.loginItem.registered !== settings.launchAtLogin ? (
+              <Banner tone="warn">
+                系统里当前的登录项状态与这里的设置不一致，重新切换一次开关即可修复。
+              </Banner>
+            ) : info?.loginItem.registered ? (
+              <Banner tone="good">已在系统中注册开机启动。</Banner>
+            ) : null}
           </Section>
 
           <Section title="数据">

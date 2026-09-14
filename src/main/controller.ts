@@ -99,11 +99,73 @@ export function applySettings(patch: Partial<Settings>): Settings {
   return next
 }
 
+/**
+ * The flag the login item passes so an auto-started instance goes straight to
+ * the tray instead of throwing a window in your face on every boot.
+ */
+export const HIDDEN_FLAG = '--hidden'
+
+/** Platforms where Electron implements login items at all. */
+function loginItemSupported(): boolean {
+  return process.platform === 'win32' || process.platform === 'darwin'
+}
+
+/**
+ * Registers or removes the login item.
+ *
+ * A no-op unless the app is packaged: in development `process.execPath` is
+ * `electron.exe`, and registering that would leave a broken entry pointing at a
+ * build tool. `loginItemState()` reports this so Settings can say so instead of
+ * showing a switch that quietly does nothing.
+ */
 function applyLaunchAtLogin(enabled: boolean): void {
-  // Never register the development binary as a login item.
-  if (!app.isPackaged) return
-  if (process.platform !== 'win32' && process.platform !== 'darwin') return
-  app.setLoginItemSettings({ openAtLogin: enabled })
+  if (!app.isPackaged || !loginItemSupported()) return
+
+  app.setLoginItemSettings({
+    openAtLogin: enabled,
+    // Passed explicitly rather than relying on the default: on Windows the
+    // login item stores an executable path, and being explicit about which one
+    // is the difference between working and pointing at a stale install.
+    path: process.execPath,
+    args: [HIDDEN_FLAG],
+  })
+}
+
+/** What the operating system actually has registered, not what we stored. */
+export function loginItemState(): {
+  supported: boolean
+  packaged: boolean
+  registered: boolean
+} {
+  const supported = loginItemSupported()
+  const packaged = app.isPackaged
+  let registered = false
+
+  if (supported) {
+    try {
+      registered = app.getLoginItemSettings({ path: process.execPath }).openAtLogin
+    } catch {
+      // Reading the registry can fail in locked-down environments; that is not
+      // worth failing a settings read over.
+      registered = false
+    }
+  }
+
+  return { supported, packaged, registered }
+}
+
+/**
+ * Re-applies the login item from the stored preference.
+ *
+ * Called on every start, not just when the switch is toggled. The registration
+ * lives in the operating system, and it goes stale on its own: install a newer
+ * version into a different folder and the old entry points at a binary that is
+ * no longer there. Rewriting it each launch is what keeps it honest.
+ */
+export function syncLaunchAtLogin(): void {
+  const { supported, packaged } = loginItemState()
+  if (!supported || !packaged) return
+  applyLaunchAtLogin(getContext().settings.launchAtLogin)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -209,6 +271,7 @@ export function appInfo(): AppInfo {
     databasePath: ctx.databasePath,
     schemaVersion: SCHEMA_VERSION,
     hotkeyRegistered: ctx.hotkeyRegistered,
+    loginItem: loginItemState(),
   }
 }
 

@@ -38,9 +38,21 @@ async function savedSettings() {
 
 test('显示版本与运行环境', async () => {
   await openSettings()
-  await expect(dialog().getByText('Electron')).toBeVisible()
+  // `exact` because the auto-start hint also mentions Electron.
+  await expect(dialog().getByText('Electron', { exact: true })).toBeVisible()
   await expect(dialog().getByText('本地优先')).toBeVisible()
   await expect(dialog().getByText('无遥测')).toBeVisible()
+})
+
+test('开发模式下明确说明开机启动不会生效', async () => {
+  await openSettings()
+  // The e2e run is not a packaged build, so the switch has to say so rather
+  // than silently doing nothing.
+  await expect(dialog().getByText(/源码开发模式/)).toBeVisible()
+
+  const toggle = dialog().getByRole('switch', { name: '开机自动启动' })
+  await toggle.click()
+  expect((await savedSettings())?.launchAtLogin).toBe(true)
 })
 
 test('切换主题立即生效', async () => {
@@ -64,7 +76,12 @@ test('浅色主题会被保存', async () => {
 test('显示当前的全局快捷键', async () => {
   await openSettings()
   await expect(dialog().getByText('Ctrl+Shift+Space')).toBeVisible()
-  await expect(dialog().getByText('全局快捷键已生效')).toBeVisible()
+
+  // Whether the combination could actually be claimed is a property of the
+  // machine, not of the app: another instance, or any other program, may
+  // already own it. Assert that the app reports one of the two states rather
+  // than that this particular machine happened to be free.
+  await expect(dialog().getByText(/全局快捷键(已生效|未生效)/)).toBeVisible()
 })
 
 test('可以录制新的全局快捷键', async () => {
