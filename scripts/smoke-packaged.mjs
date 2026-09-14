@@ -79,5 +79,14 @@ const info = await page.evaluate(async () => {
 console.log('app info:', JSON.stringify(info))
 console.log('page errors:', errors.length ? errors : 'none')
 
-await app.close()
-process.exit(0)
+// Closing the window only hides it — that is the whole point of a tray app — so
+// Playwright's teardown alone can leave the process running and the CI step
+// hanging. Ask it to quit first, then let Playwright clean up.
+await app
+  .evaluate(({ app: electronApp }) => {
+    electronApp.quit()
+  })
+  .catch(() => {})
+await app.close().catch(() => {})
+
+process.exit(errors.length > 0 ? 1 : 0)
