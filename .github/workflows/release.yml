@@ -93,15 +93,33 @@ jobs:
             notes_args=(--generate-notes)
           fi
 
+          # `--draft=false` is not redundant. Deleting a tag leaves its release
+          # behind as a draft, and a release that is only edited keeps whatever
+          # visibility it already had — so re-running a release could silently
+          # leave it invisible. Publishing is always explicit here.
+          publish() {
+            gh release edit "$tag" \
+              --title "CommandShelf $tag" \
+              --draft=false \
+              --prerelease=false \
+              "${notes_args[@]}"
+            gh release upload "$tag" artifacts/* --clobber
+          }
+
           # Re-running a release must be safe: create it the first time, and
           # refresh the notes and assets if it already exists.
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "release $tag already exists — updating it"
-            gh release edit "$tag" --title "CommandShelf $tag" "${notes_args[@]}"
-            gh release upload "$tag" artifacts/* --clobber
+            publish
+          elif gh release create "$tag" \
+            --title "CommandShelf $tag" \
+            --draft=false \
+            "${notes_args[@]}" \
+            artifacts/*; then
+            echo "release $tag created"
           else
-            gh release create "$tag" \
-              --title "CommandShelf $tag" \
-              "${notes_args[@]}" \
-              artifacts/*
+            # A draft can exist for this tag without `gh release view` finding
+            # it, in which case creating fails and updating is the way through.
+            echo "create failed — trying to update an existing release"
+            publish
           fi
